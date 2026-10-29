@@ -68,8 +68,9 @@ WSGI_APPLICATION = 'nodues_project.wsgi.application'
 
 # Database Configuration
 # Supports SQLite by default for instant out-of-the-box development & demo,
-# with one-switch support for MySQL using PyMySQL.
+# with one-switch support for MySQL using PyMySQL, and automated Vercel serverless /tmp mapping.
 USE_MYSQL = os.environ.get('USE_MYSQL', 'False').lower() in ('true', '1')
+IS_VERCEL = 'VERCEL' in os.environ or os.environ.get('ENVIRONMENT') == 'vercel'
 
 if USE_MYSQL:
     import pymysql
@@ -86,6 +87,24 @@ if USE_MYSQL:
                 'charset': 'utf8mb4',
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             }
+        }
+    }
+elif IS_VERCEL:
+    # On Vercel serverless functions, the root filesystem is read-only.
+    # Copy pre-seeded SQLite database to writable /tmp storage.
+    import shutil
+    tmp_db = Path('/tmp/db.sqlite3')
+    bundle_db = BASE_DIR / 'db.sqlite3'
+    if not tmp_db.exists() and bundle_db.exists():
+        try:
+            shutil.copy2(bundle_db, tmp_db)
+        except Exception:
+            pass
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': tmp_db if tmp_db.exists() else bundle_db,
         }
     }
 else:
@@ -119,6 +138,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://*.vercel.app',
+    'https://*.now.sh',
     'https://*.onrender.com',
     'https://*.railway.app',
     'https://*.herokuapp.com',
@@ -126,7 +147,16 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Media Files (User uploads, Certificates, QR Codes)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if IS_VERCEL:
+    MEDIA_ROOT = Path('/tmp/media')
+    try:
+        MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+        (MEDIA_ROOT / 'certificates').mkdir(parents=True, exist_ok=True)
+        (MEDIA_ROOT / 'qr_codes').mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+else:
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

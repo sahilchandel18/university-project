@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 # Database
-*.sqlite3
-*.db
+# *.sqlite3
+# *.db
 
 # Media uploads (except default placeholders)
 media/certificates/*.pdf
