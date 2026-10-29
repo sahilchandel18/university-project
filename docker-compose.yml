@@ -1,0 +1,11 @@
+services:
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py seed_data && gunicorn nodues_project.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-university-nodues-verification-system-key-2026
