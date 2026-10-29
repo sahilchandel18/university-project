@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Departments - University Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-0">Statutory University Departments</h3>
+      <p class="text-muted small mb-0">Configure clearance authorities participating in the University No Dues protocol.</p>
+    </div>
+    <div class="mt-2 mt-md-0">
+      <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+        <i class="bi bi-plus-circle me-1"></i> Add Department
+      </button>
+    </div>
+  </div>
+
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Order</th>
+            <th>Department Name</th>
+            <th>Code</th>
+            <th>Office / Location</th>
+            <th>Mandatory for Certificate</th>
+            <th>Assigned Staff</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+            <tr>
+              <td class="fw-bold text-muted">{{ dept.display_order }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="p-2 bg-light border rounded text-primary fs-5">
+                    <i class="bi {{ dept.icon }}"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark">{{ dept.name }}</div>
+                    <div class="text-muted small" style="font-size: 0.75rem;">{{ dept.description|truncatewords:8 }}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge bg-light text-muted border font-monospace">{{ dept.code }}</span></td>
+              <td class="small">{{ dept.location }}</td>
+              <td>
+                {% if dept.is_mandatory %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">Mandatory (100% Required)</span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Optional</span>
+                {% endif %}
+              </td>
+              <td class="small">
+                <span class="badge bg-primary rounded-pill">{{ dept.active_staff_count }} Staff</span>
+              </td>
+              <td>
+                {% if dept.is_active %}
+                  <span class="badge bg-success text-white">Active</span>
+                {% else %}
+                  <span class="badge bg-secondary text-white">Disabled</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-building-add text-primary me-2"></i>Add University Department</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Department Name *</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Electrical Engineering Laboratory" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Department Code (Unique) *</label>
+            <input type="text" name="code" class="form-control" placeholder="e.g. EE_LAB" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Bootstrap Icon Class</label>
+            <input type="text" name="icon" class="form-control" value="bi-building" placeholder="e.g. bi-cpu, bi-book, bi-trophy">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Office Location</label>
+            <input type="text" name="location" class="form-control" placeholder="e.g. Engineering Block B, Room 105">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Display Sequence Order</label>
+            <input type="number" name="display_order" class="form-control" value="10">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_mandatory" id="is_mandatory" checked>
+            <label class="form-check-label small" for="is_mandatory">
+              Mandatory clearance requirement for final certificate
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4">Create Department</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

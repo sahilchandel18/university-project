@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Digital Document Verification & Approval System - University No Dues Portal{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<section class="page-header-banner py-5">
+  <div class="container py-3">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3">
+          <i class="bi bi-shield-check me-1"></i> B.Tech Major Project • CSE
+        </span>
+        <h1 class="display-5 fw-bold mb-3 text-white">Digital Document Verification & Approval System</h1>
+        <h4 class="fw-normal text-warning mb-3">Module: University No Dues Clearance Portal</h4>
+        <p class="lead text-light opacity-90 mb-4" style="font-size: 1.1rem;">
+          Eliminating manual paper clearance slips. A secure, multi-role university platform connecting Students, 
+          Statutory Departments, and Academic Administration for seamless independent verifications and instant 
+          tamper-evident digital certificate issuance.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          {% if request.user.is_authenticated %}
+            <a href="{% url 'dashboard_redirect' %}" class="btn btn-warning btn-lg px-4 fw-bold rounded-pill shadow">
+              <i class="bi bi-speedometer2 me-2"></i>Go to My Dashboard
+            </a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-warning btn-lg px-4 fw-bold rounded-pill shadow">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Portal
+            </a>
+            <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+              <i class="bi bi-pencil-square me-2"></i>Student Registration
+            </a>
+          {% endif %}
+          <a href="{% url 'verify_certificate_query' %}" class="btn btn-outline-warning btn-lg px-4 rounded-pill">
+            <i class="bi bi-qr-code-scan me-2"></i>Verify a Certificate
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 text-center">
+        <div class="card card-clean border-0 shadow-lg p-4 bg-white text-dark text-start">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-search text-primary fs-4"></i>
+            <h5 class="fw-bold mb-0">Instant Certificate Verification</h5>
+          </div>
+          <p class="text-muted small">Verify the authenticity of any university issued No Dues certificate or check clearance status by Roll Number:</p>
+          <form method="GET" action="{% url 'verify_certificate_query' %}">
+            <div class="input-group mb-3">
+              <input type="text" name="query" class="form-control" placeholder="Enter Certificate No or Roll No (e.g. 2022CSE001)" required>
+              <button class="btn btn-primary" type="submit">Verify</button>
+            </div>
+          </form>
+          <div class="d-flex align-items-center gap-2 small text-muted">
+            <i class="bi bi-patch-check-fill text-success"></i>
+            <span>Encrypted with SHA-256 and unique verification token</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KPI Counters -->
+<div class="container mt-n4" style="margin-top: -30px;">
+  <div class="row g-3">
+    <div class="col-md-3 col-6">
+      <div class="kpi-card shadow-sm border-0">
+        <div class="kpi-icon-wrapper bg-primary-subtle text-primary">
+          <i class="bi bi-files"></i>
+        </div>
+        <div>
+          <div class="fs-4 fw-bold text-dark">{{ total_apps }}</div>
+          <div class="text-muted small">Total Applications</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="kpi-card shadow-sm border-0">
+        <div class="kpi-icon-wrapper bg-success-subtle text-success">
+          <i class="bi bi-patch-check-fill"></i>
+        </div>
+        <div>
+          <div class="fs-4 fw-bold text-dark">{{ completed_apps }}</div>
+          <div class="text-muted small">Certificates Issued</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="kpi-card shadow-sm border-0">
+        <div class="kpi-icon-wrapper bg-warning-subtle text-warning">
+          <i class="bi bi-building"></i>
+        </div>
+        <div>
+          <div class="fs-4 fw-bold text-dark">{{ total_departments }}</div>
+          <div class="text-muted small">Active Departments</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="kpi-card shadow-sm border-0">
+        <div class="kpi-icon-wrapper bg-info-subtle text-info">
+          <i class="bi bi-people"></i>
+        </div>
+        <div>
+          <div class="fs-4 fw-bold text-dark">{{ total_students }}</div>
+          <div class="text-muted small">Registered Students</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Workflow Section -->
+<section class="container py-5">
+  <div class="text-center mb-5">
+    <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-semibold mb-2">SYSTEM WORKFLOW</span>
+    <h2 class="fw-bold text-dark">How the University Clearance Pipeline Operates</h2>
+    <p class="text-muted">A fully automated parallel verification pipeline transforming a 2-week paper chase into minutes</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-3">
+      <div class="card card-clean h-100 p-4 text-center border-0">
+        <div class="mx-auto rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-pencil-square fs-3"></i>
+        </div>
+        <div class="badge bg-primary text-white rounded-pill mb-2">Step 1</div>
+        <h5 class="fw-bold text-dark">Online Application</h5>
+        <p class="text-muted small">
+          Student submits a clearance request specifying purpose (Degree, Migration, Semester) with pre-verified academic data.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-clean h-100 p-4 text-center border-0">
+        <div class="mx-auto rounded-circle bg-info-subtle text-info d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-diagram-3-fill fs-3"></i>
+        </div>
+        <div class="badge bg-info text-dark rounded-pill mb-2">Step 2</div>
+        <h5 class="fw-bold text-dark">Parallel Verification</h5>
+        <p class="text-muted small">
+          Each statutory department (Library, Accounts, Lab, Hostel, Sports, T&P) independently reviews student dues in their queue.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-clean h-100 p-4 text-center border-0">
+        <div class="mx-auto rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-receipt-cutoff fs-3"></i>
+        </div>
+        <div class="badge bg-warning text-dark rounded-pill mb-2">Step 3</div>
+        <h5 class="fw-bold text-dark">Dues Settlement</h5>
+        <p class="text-muted small">
+          If any department flags pending books or fines, the student receives clear instructions and dues amounts to settle them.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-clean h-100 p-4 text-center border-0">
+        <div class="mx-auto rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-patch-check-fill fs-3"></i>
+        </div>
+        <div class="badge bg-success text-white rounded-pill mb-2">Step 4</div>
+        <h5 class="fw-bold text-dark">Verifiable Certificate</h5>
+        <p class="text-muted small">
+          Once 100% of departments approve, an official ReportLab PDF Certificate with embedded security QR code is automatically issued.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Departments Grid Section -->
+<section class="bg-light py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-semibold mb-2">CONNECTED SECTIONS</span>
+      <h2 class="fw-bold text-dark">Statutory University Departments</h2>
+      <p class="text-muted">7 Integrated verification authorities required for degree & clearance certification</p>
+    </div>
+
+    <div class="row g-4">
+      {% for dept in active_departments %}
+        <div class="col-md-4 col-sm-6">
+          <div class="card card-clean h-100 p-3 border">
+            <div class="d-flex align-items-start gap-3">
+              <div class="p-3 bg-white rounded-3 border text-primary fs-3">
+                <i class="bi {{ dept.icon }}"></i>
+              </div>
+              <div>
+                <h6 class="fw-bold text-dark mb-1">{{ dept.name }}</h6>
+                <span class="badge bg-light text-muted border mb-2">{{ dept.code }}</span>
+                <p class="text-muted small mb-0">{{ dept.description|truncatewords:15 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

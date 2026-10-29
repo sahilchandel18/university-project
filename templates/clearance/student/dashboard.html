@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Dashboard - University No Dues Portal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <!-- Student Header Welcome -->
+  <div class="card card-clean border-0 shadow-sm p-4 mb-4 bg-white">
+    <div class="row align-items-center g-3">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 58px; height: 58px; font-size: 1.6rem;">
+            <i class="bi bi-mortarboard-fill"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold text-dark mb-0">Welcome, {{ student.user.get_full_name|default:student.user.username }}</h4>
+            <div class="text-muted small">
+              <span class="fw-semibold text-primary">Roll No:</span> {{ student.roll_number }} • 
+              <span class="fw-semibold">Reg No:</span> {{ student.registration_number }} • 
+              <span>{{ student.course }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        {% if not application %}
+          <a href="{% url 'student_apply' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Apply for No Dues
+          </a>
+        {% else %}
+          <a href="{% url 'student_application_detail' application.application_no %}" class="btn btn-outline-primary rounded-pill px-3">
+            <i class="bi bi-eye me-1"></i> View Full Dossier
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if application %}
+    <!-- Active Application Status Section -->
+    <div class="card card-clean border-0 shadow-sm p-4 mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-3">
+        <div>
+          <span class="badge bg-light text-primary border me-2 font-monospace">{{ application.application_no }}</span>
+          <span class="fw-bold text-dark fs-5">{{ application.get_purpose_display }}</span>
+          <div class="text-muted small">Submitted on {{ application.submitted_at|date:"M d, Y, h:i A" }}</div>
+        </div>
+        <div class="mt-2 mt-md-0">
+          {% if application.overall_status == 'COMPLETED' %}
+            <span class="badge badge-status-approved px-3 py-2 fs-6">
+              <i class="bi bi-patch-check-fill me-1"></i> 100% FULLY APPROVED
+            </span>
+          {% elif application.overall_status == 'ACTION_REQUIRED' %}
+            <span class="badge badge-status-action px-3 py-2 fs-6">
+              <i class="bi bi-exclamation-circle-fill me-1"></i> ACTION REQUIRED / DUES FLAGGED
+            </span>
+          {% elif application.overall_status == 'ON_HOLD' %}
+            <span class="badge badge-status-hold px-3 py-2 fs-6">
+              <i class="bi bi-pause-circle-fill me-1"></i> CLEARANCE ON HOLD
+            </span>
+          {% elif application.overall_status == 'REJECTED' %}
+            <span class="badge badge-status-rejected px-3 py-2 fs-6">
+              <i class="bi bi-x-circle-fill me-1"></i> REJECTED
+            </span>
+          {% else %}
+            <span class="badge badge-status-pending px-3 py-2 fs-6">
+              <i class="bi bi-hourglass-split me-1"></i> IN VERIFICATION PIPELINE
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Clearance Progress Bar -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="small fw-semibold text-muted">Department Approvals Progress</span>
+          <span class="small fw-bold text-primary">{{ application.approved_departments_count }} of {{ application.total_mandatory_count }} Departments Cleared ({{ application.progress_percentage }}%)</span>
+        </div>
+        <div class="progress" style="height: 12px; border-radius: 6px;">
+          <div class="progress-bar {% if application.is_completed %}bg-success{% else %}bg-primary{% endif %} progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ application.progress_percentage }}%;" aria-valuenow="{{ application.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+
+      <!-- If Completed: Certificate Banner -->
+      {% if application.is_completed %}
+        <div class="alert alert-success border-success p-3 rounded-3 d-flex flex-wrap justify-content-between align-items-center mb-4">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-award-fill text-success fs-1"></i>
+            <div>
+              <h5 class="fw-bold mb-0 text-success">Official No Dues Certificate Issued!</h5>
+              <div class="small text-muted">All 7 statutory departments have verified zero dues. Certificate ID: <b>{{ application.certificate.certificate_no }}</b></div>
+            </div>
+          </div>
+          <div class="mt-2 mt-md-0 d-flex gap-2">
+            <a href="{% url 'download_certificate_pdf' application.application_no %}" class="btn btn-success fw-semibold px-4 rounded-pill shadow-sm" target="_blank">
+              <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Certificate
+            </a>
+            <a href="{% url 'verify_certificate' application.certificate.verification_uuid %}" class="btn btn-outline-success rounded-pill px-3">
+              <i class="bi bi-qr-code me-1"></i> Verify QR
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- If Pending Dues / Action Required Banner -->
+      {% if application.total_dues_amount > 0 or application.overall_status == 'ACTION_REQUIRED' %}
+        <div class="alert alert-warning border-warning p-3 rounded-3 mb-4">
+          <div class="d-flex align-items-start gap-3">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-2 mt-1"></i>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-1">Outstanding Institutional Dues Detected</h6>
+                <span class="fs-5 fw-bold text-danger">Total: ₹{{ application.total_dues_amount }}</span>
+              </div>
+              <p class="small text-muted mb-2">
+                One or more departments have flagged pending charges, books, or requirements that must be resolved before your clearance can be finalized.
+              </p>
+              
+              <div class="bg-white rounded p-2 border">
+                {% for clr in department_records %}
+                  {% if clr.dues_amount > 0 or clr.status == 'ACTION_REQUIRED' or clr.status == 'ON_HOLD' %}
+                    <div class="d-flex justify-content-between align-items-center py-1 border-bottom last-border-0">
+                      <div>
+                        <span class="fw-bold text-dark small"><i class="bi {{ clr.department.icon }} me-1"></i>{{ clr.department.name }}:</span>
+                        <span class="small text-muted">{{ clr.remarks }}</span>
+                        {% if clr.dues_breakdown %}
+                          <div class="small text-danger ms-3">Note: {{ clr.dues_breakdown }}</div>
+                        {% endif %}
+                      </div>
+                      {% if clr.dues_amount > 0 %}
+                        <span class="badge bg-danger">₹{{ clr.dues_amount }}</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">{{ clr.get_status_display }}</span>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Department-wise Clearance Status Grid -->
+      <h6 class="fw-bold text-dark mb-3"><i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>Department Clearance Pipeline</h6>
+      <div class="row g-3">
+        {% for clr in department_records %}
+          <div class="col-lg-4 col-md-6">
+            <div class="card h-100 p-3 border rounded-3 bg-light">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="p-2 bg-white rounded border text-primary">
+                    <i class="bi {{ clr.department.icon }}"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold mb-0 text-dark small">{{ clr.department.name }}</h6>
+                    <span class="text-muted" style="font-size: 0.7rem;">{{ clr.department.code }}</span>
+                  </div>
+                </div>
+
+                {% if clr.status == 'APPROVED' %}
+                  <span class="badge badge-status-approved small"><i class="bi bi-check-circle me-1"></i>Cleared</span>
+                {% elif clr.status == 'ACTION_REQUIRED' %}
+                  <span class="badge badge-status-action small"><i class="bi bi-exclamation-triangle me-1"></i>Dues</span>
+                {% elif clr.status == 'ON_HOLD' %}
+                  <span class="badge badge-status-hold small"><i class="bi bi-pause-circle me-1"></i>On Hold</span>
+                {% elif clr.status == 'REJECTED' %}
+                  <span class="badge badge-status-rejected small"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="badge badge-status-pending small"><i class="bi bi-clock me-1"></i>Pending</span>
+                {% endif %}
+              </div>
+
+              <div class="small text-muted mb-2" style="font-size: 0.78rem;">
+                {{ clr.remarks|default:"Awaiting departmental audit." }}
+              </div>
+
+              {% if clr.dues_amount > 0 %}
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto small">
+                  <span class="text-danger fw-semibold">Outstanding Due:</span>
+                  <span class="fw-bold text-danger">₹{{ clr.dues_amount }}</span>
+                </div>
+              {% elif clr.reviewed_at %}
+                <div class="pt-2 border-top mt-auto text-muted small" style="font-size: 0.7rem;">
+                  Verified by {{ clr.reviewed_by.get_full_name|default:clr.reviewed_by.username|default:"Officer" }} on {{ clr.reviewed_at|date:"d/m/Y" }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+  {% else %}
+    <!-- No Active Application Found -->
+    <div class="card card-clean border-0 shadow-sm p-5 text-center my-4">
+      <div class="mx-auto rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+        <i class="bi bi-file-earmark-plus fs-2"></i>
+      </div>
+      <h4 class="fw-bold text-dark">No Active Clearance Application</h4>
+      <p class="text-muted mx-auto mb-4" style="max-width: 500px;">
+        You have not initiated an institutional No Dues clearance request yet. Submit your application online to trigger automated verification across all statutory university departments.
+      </p>
+      <div>
+        <a href="{% url 'student_apply' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
+          <i class="bi bi-plus-circle me-2"></i>Apply for No Dues Now
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Recent Notifications Box -->
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-bell-fill text-primary me-2"></i>Recent Clearance Alerts & Notices</h6>
+    {% if notifications %}
+      <div class="list-group list-group-flush">
+        {% for notif in notifications %}
+          <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold text-dark small">{{ notif.title }}</div>
+              <div class="text-muted small">{{ notif.message }}</div>
+            </div>
+            <span class="text-muted small" style="font-size: 0.75rem;">{{ notif.created_at|timesince }} ago</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-muted small py-2">No alerts at this moment. You will receive updates here as departments process your clearances.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

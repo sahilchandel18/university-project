@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign In - University No Dues Portal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      
+      <!-- Top Welcome Banner -->
+      <div class="text-center mb-4">
+        <img src="{% static 'images/university_crest.jpg' %}" alt="University Crest" class="brand-crest mb-2" style="width: 72px; height: 72px;">
+        <h3 class="fw-bold text-primary mb-1">{{ UNIVERSITY_NAME }}</h3>
+        <p class="text-muted small">Centralized Digital Document Verification & No Dues Clearance Portal</p>
+      </div>
+
+      <div class="row g-4 align-items-stretch">
+        
+        <!-- Left: Standard Login Form -->
+        <div class="col-md-6">
+          <div class="card card-clean h-100 shadow-sm p-4">
+            <h4 class="fw-bold text-dark mb-3"><i class="bi bi-box-arrow-in-right text-primary me-2"></i>Sign In</h4>
+            <p class="text-muted small mb-4">Enter your university credentials to access your designated clearance portal.</p>
+
+            <form method="POST" action="{% url 'login' %}">
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <label for="username" class="form-label small fw-semibold">Username / Roll Number / Staff ID</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                  <input type="text" name="username" id="username" class="form-control" placeholder="e.g. admin or 2022CSE001" required autofocus>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="password" class="form-label small fw-semibold">Password</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                  <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="rememberMe">
+                  <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
+                </div>
+                <a href="#" class="small text-decoration-none" onclick="alert('For demo accounts, use password: student123, password123, or admin123.')">Forgot password?</a>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold rounded-pill mb-3">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Portal
+              </button>
+
+              <div class="text-center pt-2 border-top">
+                <span class="small text-muted">New student seeking clearance?</span>
+                <a href="{% url 'register' %}" class="small fw-bold text-decoration-none ms-1">Create Student Account</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: 1-Click Evaluation / Viva Quick Login Box -->
+        <div class="col-md-6">
+          <div class="card card-clean h-100 shadow-sm p-4 border-warning bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Viva / Demo Quick Sign-In</h5>
+              <span class="badge bg-warning text-dark">One-Click</span>
+            </div>
+            <p class="text-muted small mb-3">Instantly log in to any pre-configured demo account to evaluate the workflow:</p>
+
+            <div class="d-flex flex-column gap-2">
+              <!-- Admin -->
+              <a href="{% url 'quick_demo_login' 'admin' %}" class="btn btn-dark text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 shadow-none">
+                <div>
+                  <div class="fw-bold small"><i class="bi bi-shield-check text-warning me-2"></i>University Administrator</div>
+                  <div class="text-light opacity-75" style="font-size: 0.72rem;">User: admin (Full system control, reports, bottlenecks)</div>
+                </div>
+                <span class="badge bg-primary">Admin</span>
+              </a>
+
+              <!-- Department Staff -->
+              <div class="dropdown">
+                <button class="btn btn-white bg-white border text-start w-100 d-flex justify-content-between align-items-center py-2 px-3 rounded-3 shadow-none dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <div>
+                    <div class="fw-bold small text-dark"><i class="bi bi-person-badge text-primary me-2"></i>Department Clearance Officers</div>
+                    <div class="text-muted" style="font-size: 0.72rem;">Verify & approve student dues by department</div>
+                  </div>
+                </button>
+                <ul class="dropdown-menu w-100 shadow-sm">
+                  <li><a class="dropdown-item py-2" href="{% url 'quick_demo_login' 'staff_library' %}"><i class="bi bi-book me-2 text-primary"></i>Central Library Staff (staff_library)</a></li>
+                  <li><a class="dropdown-item py-2" href="{% url 'quick_demo_login' 'staff_accounts' %}"><i class="bi bi-cash-coin me-2 text-success"></i>Accounts & Fee Staff (staff_accounts)</a></li>
+                  <li><a class="dropdown-item py-2" href="{% url 'quick_demo_login' 'staff_hostel' %}"><i class="bi bi-houses me-2 text-warning"></i>Chief Hostel Warden (staff_hostel)</a></li>
+                  <li><a class="dropdown-item py-2" href="{% url 'quick_demo_login' 'staff_lab' %}"><i class="bi bi-cpu me-2 text-info"></i>CSE Laboratory In-Charge (staff_lab)</a></li>
+                  <li><a class="dropdown-item py-2" href="{% url 'quick_demo_login' 'staff_sports' %}"><i class="bi bi-trophy me-2 text-danger"></i>Sports Complex Officer (staff_sports)</a></li>
+                  <li><a class="dropdown-item py-2" href="{% url 'quick_demo_login' 'staff_tp' %}"><i class="bi bi-briefcase me-2 text-secondary"></i>T&P Placement Cell (staff_tp)</a></li>
+                </ul>
+              </div>
+
+              <!-- Student Completed -->
+              <a href="{% url 'quick_demo_login' 'student_completed' %}" class="btn btn-outline-success text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 bg-white">
+                <div>
+                  <div class="fw-bold small text-success"><i class="bi bi-patch-check-fill me-2"></i>Student: Aarav Patel (100% Cleared)</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">All 7 departments approved • Certificate ready to download</div>
+                </div>
+                <span class="badge bg-success">Certificate Ready</span>
+              </a>
+
+              <!-- Student In Progress -->
+              <a href="{% url 'quick_demo_login' 'student_in_progress' %}" class="btn btn-outline-primary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 bg-white">
+                <div>
+                  <div class="fw-bold small text-primary"><i class="bi bi-hourglass-split me-2"></i>Student: Priya Sharma (In Progress)</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">4 departments cleared, Accounts & Hostel pending</div>
+                </div>
+                <span class="badge bg-primary">In Progress</span>
+              </a>
+
+              <!-- Student With Dues -->
+              <a href="{% url 'quick_demo_login' 'student_with_dues' %}" class="btn btn-outline-warning text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 bg-white">
+                <div>
+                  <div class="fw-bold small text-dark"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Student: Rohan Das (Pending Dues)</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">Library book fine (₹250) + Fee due (₹500)</div>
+                </div>
+                <span class="badge bg-warning text-dark">Dues: ₹750</span>
+              </a>
+
+              <!-- Fresh Student -->
+              <a href="{% url 'quick_demo_login' 'student_new' %}" class="btn btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 rounded-3 bg-white">
+                <div>
+                  <div class="fw-bold small text-secondary"><i class="bi bi-plus-circle me-2"></i>Student: Ananya Iyer (Fresh - Apply)</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">No application yet • Test live submission form</div>
+                </div>
+                <span class="badge bg-secondary">Fresh Apply</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

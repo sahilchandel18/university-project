@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Verification Queue - {{ department.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-0">{{ department.name }} Verification Queue</h3>
+      <p class="text-muted small mb-0">Audit student accounts, set dues, place on hold, or approve No Dues clearances.</p>
+    </div>
+  </div>
+
+  <!-- Search and Tabs -->
+  <div class="card card-clean border-0 shadow-sm p-3 mb-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-6">
+        <form method="GET" class="d-flex gap-2">
+          <input type="hidden" name="tab" value="{{ current_tab }}">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" class="form-control" placeholder="Search by Roll No, Student Name, or Application ID..." value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary px-3">Search</button>
+          </div>
+          {% if search_query %}
+            <a href="?tab={{ current_tab }}" class="btn btn-outline-secondary">Clear</a>
+          {% endif %}
+        </form>
+      </div>
+
+      <div class="col-md-6 text-md-end">
+        <div class="small text-muted">Showing <b>{{ clearances.count }}</b> records in {{ department.code }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-pills mb-3 gap-2">
+    <li class="nav-item">
+      <a class="nav-link {% if current_tab == 'pending' %}active{% endif %}" href="?tab=pending{% if search_query %}&q={{ search_query }}{% endif %}">
+        <i class="bi bi-clock me-1"></i> Pending Review <span class="badge bg-warning text-dark ms-1">{{ counts.pending }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if current_tab == 'action_required' %}active{% endif %}" href="?tab=action_required{% if search_query %}&q={{ search_query }}{% endif %}">
+        <i class="bi bi-exclamation-triangle me-1"></i> Dues Flagged <span class="badge bg-danger ms-1">{{ counts.action_required }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if current_tab == 'on_hold' %}active{% endif %}" href="?tab=on_hold{% if search_query %}&q={{ search_query }}{% endif %}">
+        <i class="bi bi-pause-circle me-1"></i> On Hold <span class="badge bg-secondary ms-1">{{ counts.on_hold }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if current_tab == 'approved' %}active{% endif %}" href="?tab=approved{% if search_query %}&q={{ search_query }}{% endif %}">
+        <i class="bi bi-check-circle me-1"></i> Approved <span class="badge bg-success ms-1">{{ counts.approved }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if current_tab == 'rejected' %}active{% endif %}" href="?tab=rejected{% if search_query %}&q={{ search_query }}{% endif %}">
+        <i class="bi bi-x-circle me-1"></i> Rejected <span class="badge bg-danger ms-1">{{ counts.rejected }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if current_tab == 'all' %}active{% endif %}" href="?tab=all{% if search_query %}&q={{ search_query }}{% endif %}">
+        All Applications <span class="badge bg-light text-dark ms-1">{{ counts.all }}</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Applications Table -->
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Application ID</th>
+            <th>Roll Number</th>
+            <th>Student Name</th>
+            <th>Course & Branch</th>
+            <th class="text-center">Current Status</th>
+            <th>Dues (₹)</th>
+            <th>Remarks</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for clr in clearances %}
+            {% with app=clr.application student=clr.application.student %}
+              <tr>
+                <td><span class="font-monospace fw-semibold text-primary">{{ app.application_no }}</span></td>
+                <td><strong class="text-dark">{{ student.roll_number }}</strong></td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ student.user.get_full_name|default:student.user.username }}</div>
+                  <div class="text-muted small" style="font-size: 0.75rem;">{{ student.registration_number }}</div>
+                </td>
+                <td class="small">
+                  <div>{{ student.course }}</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">{{ student.batch_year }}</div>
+                </td>
+                <td class="text-center">
+                  {% if clr.status == 'APPROVED' %}
+                    <span class="badge badge-status-approved px-2 py-1"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                  {% elif clr.status == 'ACTION_REQUIRED' %}
+                    <span class="badge badge-status-action px-2 py-1"><i class="bi bi-exclamation-triangle me-1"></i>Action Req.</span>
+                  {% elif clr.status == 'ON_HOLD' %}
+                    <span class="badge badge-status-hold px-2 py-1"><i class="bi bi-pause-circle me-1"></i>On Hold</span>
+                  {% elif clr.status == 'REJECTED' %}
+                    <span class="badge badge-status-rejected px-2 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                  {% else %}
+                    <span class="badge badge-status-pending px-2 py-1"><i class="bi bi-clock me-1"></i>Pending</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if clr.dues_amount > 0 %}
+                    <span class="badge bg-danger">₹{{ clr.dues_amount }}</span>
+                  {% else %}
+                    <span class="text-success small fw-semibold">₹ 0.00</span>
+                  {% endif %}
+                </td>
+                <td class="small text-muted" style="max-width: 200px;">
+                  {{ clr.remarks|default:"-"|truncatewords:8 }}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'department_review_clearance' clr.id %}" class="btn btn-primary btn-sm rounded-pill px-3">
+                    <i class="bi bi-pencil-square me-1"></i> Review
+                  </a>
+                </td>
+              </tr>
+            {% endwith %}
+          {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">
+                No applications found in this tab.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

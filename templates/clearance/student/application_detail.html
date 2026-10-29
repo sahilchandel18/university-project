@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Application {{ application.application_no }} - {{ UNIVERSITY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header Banner -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{% url 'student_dashboard' %}" class="text-decoration-none small text-muted mb-1 d-inline-block">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+      </a>
+      <h3 class="fw-bold text-dark mb-0">Application Dossier: {{ application.application_no }}</h3>
+      <div class="text-muted small">Submitted on {{ application.submitted_at|date:"F d, Y, h:i A" }} • Purpose: <strong>{{ application.get_purpose_display }}</strong></div>
+    </div>
+
+    <div class="mt-2 mt-md-0 d-flex gap-2">
+      {% if application.is_completed %}
+        <a href="{% url 'download_certificate_pdf' application.application_no %}" class="btn btn-success rounded-pill px-4 shadow-sm" target="_blank">
+          <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Certificate
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Overall Status Card -->
+  <div class="card card-clean border-0 shadow-sm p-4 mb-4">
+    <div class="row align-items-center g-3">
+      <div class="col-md-7">
+        <div class="small text-muted mb-1">CURRENT CLEARANCE STATUS</div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          {% if application.overall_status == 'COMPLETED' %}
+            <span class="badge badge-status-approved px-3 py-2 fs-6"><i class="bi bi-patch-check-fill me-1"></i> 100% FULLY APPROVED</span>
+          {% elif application.overall_status == 'ACTION_REQUIRED' %}
+            <span class="badge badge-status-action px-3 py-2 fs-6"><i class="bi bi-exclamation-triangle-fill me-1"></i> ACTION REQUIRED / DUES PENDING</span>
+          {% elif application.overall_status == 'ON_HOLD' %}
+            <span class="badge badge-status-hold px-3 py-2 fs-6"><i class="bi bi-pause-circle-fill me-1"></i> ON HOLD</span>
+          {% elif application.overall_status == 'REJECTED' %}
+            <span class="badge badge-status-rejected px-3 py-2 fs-6"><i class="bi bi-x-circle-fill me-1"></i> REJECTED</span>
+          {% else %}
+            <span class="badge badge-status-pending px-3 py-2 fs-6"><i class="bi bi-hourglass-split me-1"></i> UNDER DEPARTMENTAL VERIFICATION</span>
+          {% endif %}
+          <span class="text-muted small">({{ application.approved_departments_count }} / {{ application.total_mandatory_count }} Departments Cleared)</span>
+        </div>
+
+        <div class="progress" style="height: 10px; border-radius: 5px;">
+          <div class="progress-bar {% if application.is_completed %}bg-success{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ application.progress_percentage }}%;"></div>
+        </div>
+      </div>
+
+      <div class="col-md-5 text-md-end border-start">
+        <div class="small text-muted">TOTAL OUTSTANDING DUES</div>
+        <div class="fs-3 fw-bold {% if application.total_dues_amount > 0 %}text-danger{% else %}text-success{% endif %}">
+          ₹ {{ application.total_dues_amount }}
+        </div>
+        <div class="small text-muted">
+          {% if application.total_dues_amount > 0 %}
+            Immediate payment / resolution required
+          {% else %}
+            Nil dues across verified departments
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department-wise Clearances Table -->
+  <div class="card card-clean border-0 shadow-sm p-4 mb-4">
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-primary me-2"></i>Department Clearance Audit Table</h5>
+    
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Department / Authority</th>
+            <th class="text-center">Clearance Status</th>
+            <th>Outstanding Dues</th>
+            <th>Officer Remarks / Instructions</th>
+            <th>Verified By</th>
+            <th>Date Cleared</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for clr in clearances %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="p-2 bg-light border rounded text-primary">
+                    <i class="bi {{ clr.department.icon }}"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark">{{ clr.department.name }}</div>
+                    <span class="text-muted small" style="font-size: 0.75rem;">{{ clr.department.location }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">
+                {% if clr.status == 'APPROVED' %}
+                  <span class="badge badge-status-approved px-2 py-1"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                {% elif clr.status == 'ACTION_REQUIRED' %}
+                  <span class="badge badge-status-action px-2 py-1"><i class="bi bi-exclamation-circle me-1"></i>Action Req.</span>
+                {% elif clr.status == 'ON_HOLD' %}
+                  <span class="badge badge-status-hold px-2 py-1"><i class="bi bi-pause-circle me-1"></i>On Hold</span>
+                {% elif clr.status == 'REJECTED' %}
+                  <span class="badge badge-status-rejected px-2 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="badge badge-status-pending px-2 py-1"><i class="bi bi-clock me-1"></i>Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if clr.dues_amount > 0 %}
+                  <span class="fw-bold text-danger">₹ {{ clr.dues_amount }}</span>
+                  {% if clr.dues_breakdown %}
+                    <div class="text-muted" style="font-size: 0.75rem;">{{ clr.dues_breakdown }}</div>
+                  {% endif %}
+                {% else %}
+                  <span class="text-success small fw-semibold">₹ 0.00</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="small text-dark">{{ clr.remarks|default:"Awaiting review" }}</div>
+              </td>
+              <td class="small">
+                {{ clr.reviewed_by.get_full_name|default:clr.reviewed_by.username|default:"-" }}
+              </td>
+              <td class="small text-muted">
+                {{ clr.reviewed_at|date:"d M Y, h:i A"|default:"-" }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Clearance Audit Logs / History Timeline -->
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-secondary me-2"></i>Clearance Activity & Audit Trail</h5>
+    
+    {% if logs %}
+      <div class="list-group list-group-flush">
+        {% for log in logs %}
+          <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+            <div>
+              <span class="badge bg-light text-dark border me-2 font-monospace">{{ log.action }}</span>
+              <strong class="text-dark small">
+                {% if log.department %}{{ log.department.name }}:{% endif %}
+              </strong>
+              <span class="small text-muted">{{ log.remarks }}</span>
+              {% if log.dues_amount > 0 %}
+                <span class="badge bg-danger ms-2">Dues: ₹{{ log.dues_amount }}</span>
+              {% endif %}
+            </div>
+            <div class="text-muted small" style="font-size: 0.75rem;">
+              by <b>{{ log.actor.get_full_name|default:log.actor.username|default:"System" }}</b> • {{ log.timestamp|date:"d M, h:i A" }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-muted small">No audit actions recorded yet.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

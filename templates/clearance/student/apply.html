@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for No Dues - {{ UNIVERSITY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      
+      <div class="card card-clean border-0 shadow-sm p-4">
+        
+        <div class="border-bottom pb-3 mb-4">
+          <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-semibold mb-2">FORM ND-01</span>
+          <h4 class="fw-bold text-dark mb-1">Submit Application for Institutional No Dues Clearance</h4>
+          <p class="text-muted small mb-0">
+            Once submitted, clearance requests will be automatically dispatched to all {{ active_departments.count }} university departments simultaneously.
+          </p>
+        </div>
+
+        <!-- Student Verification Summary -->
+        <div class="card mb-4 bg-light border-0 p-3">
+          <h6 class="fw-bold text-primary mb-3"><i class="bi bi-person-badge-fill me-1"></i> Verified Student Particulars</h6>
+          <div class="row g-2 small">
+            <div class="col-md-4">
+              <span class="text-muted">Full Name:</span> <strong class="text-dark">{{ student.user.get_full_name|default:student.user.username }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted">Roll Number:</span> <strong class="text-dark">{{ student.roll_number }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted">Registration No:</span> <strong class="text-dark">{{ student.registration_number }}</strong>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted">Course & Branch:</span> <strong class="text-dark">{{ student.course }} ({{ student.branch }})</strong>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted">Batch & Semester:</span> <strong class="text-dark">{{ student.batch_year }} • {{ student.semester }}</strong>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted">Hostel Residency:</span> <strong class="text-dark">{{ student.hostel_details|default:"Day Scholar" }}</strong>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted">Contact Mobile:</span> <strong class="text-dark">{{ student.contact_number|default:"N/A" }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="row g-3 mb-4">
+            
+            <div class="col-md-6">
+              <label for="purpose" class="form-label small fw-semibold">Purpose of Clearance *</label>
+              <select name="purpose" id="purpose" class="form-select" required>
+                {% for p_code, p_name in purposes %}
+                  <option value="{{ p_code }}" {% if p_code == 'DEGREE' %}selected{% endif %}>{{ p_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label for="academic_session" class="form-label small fw-semibold">Academic Session *</label>
+              <input type="text" name="academic_session" id="academic_session" class="form-control" value="{{ student.academic_session }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="current_semester" class="form-label small fw-semibold">Current Semester *</label>
+              <input type="text" name="current_semester" id="current_semester" class="form-control" value="{{ student.semester }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="supporting_document" class="form-label small fw-semibold">Supporting Document (Optional PDF / Image)</label>
+              <input type="file" name="supporting_document" id="supporting_document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+              <div class="form-text small">e.g. Student ID Card copy, fee receipt, or provisional grade card.</div>
+            </div>
+
+            <div class="col-12">
+              <label for="student_remarks" class="form-label small fw-semibold">Student Remarks / Special Instructions</label>
+              <textarea name="student_remarks" id="student_remarks" rows="3" class="form-control" placeholder="Mention any specific details regarding thesis submission, laboratory kit return, or hostel room vacation..."></textarea>
+            </div>
+
+          </div>
+
+          <!-- Departments Included -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-success me-2"></i>Departments Auditing this Application:</h6>
+            <div class="d-flex flex-wrap gap-2">
+              {% for dept in active_departments %}
+                <span class="badge bg-white border text-dark p-2 rounded-pill small">
+                  <i class="bi {{ dept.icon }} text-primary me-1"></i>{{ dept.name }}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Undertaking -->
+          <div class="card p-3 bg-light border-0 mb-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="declaration" required>
+              <label class="form-check-label small text-muted" for="declaration">
+                I hereby declare that all academic and personal particulars stated above are true and complete. 
+                I request the University Departments to verify and issue clearance. I understand that any false declaration or outstanding liability will result in withholding of certificates.
+              </label>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">
+              <i class="bi bi-arrow-left me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-semibold shadow">
+              <i class="bi bi-send-fill me-1"></i> Submit No Dues Application
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

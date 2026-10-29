@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}All Applications - University Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-0">Master Applications Directory</h3>
+      <p class="text-muted small mb-0">University-wide surveillance and auditing of all submitted No Dues requests.</p>
+    </div>
+    <div class="mt-2 mt-md-0">
+      <a href="{% url 'admin_export_reports_csv' %}" class="btn btn-outline-success rounded-pill px-3">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Master CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="card card-clean border-0 shadow-sm p-3 mb-4">
+    <form method="GET" class="row g-2 align-items-center">
+      
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" class="form-control" placeholder="Search by Roll No, Reg No, Name, App ID..." value="{{ search_query }}">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          {% for code, name in status_choices %}
+            <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <select name="purpose" class="form-select">
+          <option value="">All Purposes</option>
+          {% for code, name in purpose_choices %}
+            <option value="{{ code }}" {% if purpose_filter == code %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        {% if search_query or status_filter or purpose_filter %}
+          <a href="{% url 'admin_applications' %}" class="btn btn-outline-secondary">Reset</a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Applications Table -->
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Application ID</th>
+            <th>Roll Number</th>
+            <th>Student Full Name</th>
+            <th>Course & Branch</th>
+            <th>Purpose</th>
+            <th>Submitted</th>
+            <th>Overall Status</th>
+            <th>Dues (₹)</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+            <tr>
+              <td><span class="font-monospace fw-bold text-primary">{{ app.application_no }}</span></td>
+              <td><strong class="text-dark">{{ app.student.roll_number }}</strong></td>
+              <td>{{ app.student.user.get_full_name|default:app.student.user.username }}</td>
+              <td class="small">{{ app.student.course|truncatewords:3 }}</td>
+              <td class="small">{{ app.get_purpose_display|truncatewords:3 }}</td>
+              <td class="small text-muted">{{ app.submitted_at|date:"d M Y" }}</td>
+              <td>
+                {% if app.overall_status == 'COMPLETED' %}
+                  <span class="badge badge-status-approved px-2 py-1"><i class="bi bi-patch-check-fill me-1"></i>Completed</span>
+                {% elif app.overall_status == 'ACTION_REQUIRED' %}
+                  <span class="badge badge-status-action px-2 py-1"><i class="bi bi-exclamation-triangle me-1"></i>Dues Flagged</span>
+                {% elif app.overall_status == 'ON_HOLD' %}
+                  <span class="badge badge-status-hold px-2 py-1"><i class="bi bi-pause-circle me-1"></i>On Hold</span>
+                {% elif app.overall_status == 'REJECTED' %}
+                  <span class="badge badge-status-rejected px-2 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="badge badge-status-pending px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>In Progress</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if app.total_dues_amount > 0 %}
+                  <span class="badge bg-danger">₹ {{ app.total_dues_amount }}</span>
+                {% else %}
+                  <span class="text-success small fw-semibold">₹ 0.00</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'admin_application_detail' app.application_no %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                  <i class="bi bi-eye me-1"></i> Inspect
+                </a>
+                {% if app.is_completed %}
+                  <a href="{% url 'download_certificate_pdf' app.application_no %}" class="btn btn-success btn-sm rounded-pill px-2 ms-1" target="_blank" title="Download PDF">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">
+                No applications matching current filters found.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

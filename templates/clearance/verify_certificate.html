@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify No Dues Certificate - {{ UNIVERSITY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  
+  <div class="text-center mb-4">
+    <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-semibold mb-2">PUBLIC VERIFICATION CELL</span>
+    <h3 class="fw-bold text-dark">University Digital Certificate Verification</h3>
+    <p class="text-muted small">Official registry validating institutional No Dues certificates issued by the University.</p>
+  </div>
+
+  <!-- Search Form -->
+  <div class="row justify-content-center mb-5">
+    <div class="col-lg-7">
+      <form method="GET" action="{% url 'verify_certificate_query' %}" class="card card-clean p-3 shadow-sm">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-qr-code text-primary"></i></span>
+          <input type="text" name="query" class="form-control border-start-0" placeholder="Enter Certificate No (e.g. NDC-2026-CSE001-0001) or Student Roll No" value="{{ request.GET.query }}" required>
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">
+            <i class="bi bi-search me-1"></i> Check Authenticity
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  {% if searched %}
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        
+        {% if cert %}
+          <!-- Authentic Certificate Seal Card -->
+          <div class="card card-clean border-success shadow-lg p-4 mb-4">
+            
+            <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4">
+              <div class="d-flex align-items-center gap-3">
+                <img src="{% static 'images/university_crest.jpg' %}" alt="University Crest" class="brand-crest" style="width: 60px; height: 60px;">
+                <div>
+                  <h5 class="fw-bold text-dark mb-0">{{ UNIVERSITY_NAME }}</h5>
+                  <div class="text-success fw-bold d-flex align-items-center gap-1 small">
+                    <i class="bi bi-patch-check-fill fs-5"></i>
+                    <span>AUTHENTIC & DIGITALLY VERIFIED DOCUMENT</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-end">
+                <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-6">
+                  <i class="bi bi-shield-lock-fill me-1"></i> STATUS: VALID
+                </span>
+              </div>
+            </div>
+
+            <!-- Student Particulars -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Certificate Number</div>
+                  <div class="fw-bold text-dark font-monospace">{{ cert.certificate_no }}</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Issue Date</div>
+                  <div class="fw-bold text-dark">{{ cert.issue_date|date:"F d, Y" }}</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Verification Token (UUID)</div>
+                  <div class="fw-bold text-primary font-monospace small text-truncate" title="{{ cert.verification_uuid }}">{{ cert.verification_uuid }}</div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Student Full Name</div>
+                  <div class="fw-bold text-dark">{{ cert.student.user.get_full_name|default:cert.student.user.username }}</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Student Roll Number</div>
+                  <div class="fw-bold text-dark">{{ cert.student.roll_number }}</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Registration / Enrollment No</div>
+                  <div class="fw-bold text-dark">{{ cert.student.registration_number }}</div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Course & Branch</div>
+                  <div class="fw-semibold text-dark">{{ cert.student.course }} • {{ cert.student.branch }}</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Batch Year & Session</div>
+                  <div class="fw-semibold text-dark">{{ cert.student.batch_year }} (Session {{ cert.student.academic_session }})</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Department Clearances Audit -->
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-card-checklist text-primary me-2"></i>Department Clearance Audit Record</h6>
+            <div class="table-responsive mb-4">
+              <table class="table table-bordered table-sm align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Department / Office</th>
+                    <th class="text-center">Status</th>
+                    <th>Verified By</th>
+                    <th>Date Cleared</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for clr in department_clearances %}
+                    <tr>
+                      <td class="fw-semibold">{{ clr.department.name }}</td>
+                      <td class="text-center">
+                        <span class="badge bg-success text-white px-2 py-1">CLEARED (NIL)</span>
+                      </td>
+                      <td class="small">{{ clr.reviewed_by.get_full_name|default:clr.reviewed_by.username|default:"Authorized Staff" }}</td>
+                      <td class="small">{{ clr.reviewed_at|date:"d/m/Y"|default:"N/A" }}</td>
+                      <td class="small text-muted">{{ clr.remarks|default:"No dues pending." }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">No clearance records found.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+              <div class="small text-muted">
+                <i class="bi bi-info-circle me-1"></i> This document is cryptographically signed and stored in the University database.
+              </div>
+              {% if cert.application %}
+                <a href="{% url 'download_certificate_pdf' cert.application.application_no %}" class="btn btn-outline-primary rounded-pill btn-sm">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> View Official PDF Copy
+                </a>
+              {% endif %}
+            </div>
+
+          </div>
+
+        {% else %}
+          <!-- Error Not Found Card -->
+          <div class="card card-clean border-danger shadow-sm p-4 text-center">
+            <div class="text-danger mb-3">
+              <i class="bi bi-shield-x fs-1"></i>
+            </div>
+            <h5 class="fw-bold text-danger">Certificate Not Found or Invalid</h5>
+            <p class="text-muted small mb-3">
+              {{ error_message|default:"We could not find an authentic No Dues Certificate corresponding to the query provided." }}
+            </p>
+            <div class="small text-secondary">
+              Please double check the Certificate ID (e.g. <code>NDC-2026-CSE001-0001</code>) or the Student Roll Number.
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

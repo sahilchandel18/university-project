@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Application {{ application.application_no }} - University Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{% url 'admin_applications' %}" class="text-decoration-none small text-muted mb-1 d-inline-block">
+        <i class="bi bi-arrow-left me-1"></i> Back to Master Applications
+      </a>
+      <h3 class="fw-bold text-dark mb-0">Institutional Application Dossier: {{ application.application_no }}</h3>
+      <div class="text-muted small">Student: <strong>{{ student.roll_number }}</strong> • {{ student.user.get_full_name|default:student.user.username }} • Submitted {{ application.submitted_at|date:"M d, Y, h:i A" }}</div>
+    </div>
+
+    <div class="mt-2 mt-md-0 d-flex gap-2">
+      {% if application.is_completed %}
+        <a href="{% url 'download_certificate_pdf' application.application_no %}" class="btn btn-success rounded-pill px-4 shadow-sm" target="_blank">
+          <i class="bi bi-file-earmark-pdf-fill me-1"></i> View Issued PDF Certificate
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Student Academic Particulars -->
+    <div class="col-lg-4">
+      <div class="card card-clean border-0 shadow-sm p-4 h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-lines-fill text-primary me-2"></i>Student Bio & Particulars</h5>
+        
+        <div class="row g-2 small">
+          <div class="col-12 border-bottom pb-2 mb-2">
+            <span class="text-muted d-block">Full Legal Name:</span>
+            <strong class="text-dark fs-6">{{ student.user.get_full_name|default:student.user.username }}</strong>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Roll Number:</span>
+            <strong class="text-dark">{{ student.roll_number }}</strong>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Registration No:</span>
+            <strong class="text-dark">{{ student.registration_number }}</strong>
+          </div>
+          <div class="col-12">
+            <span class="text-muted d-block">Course & Branch:</span>
+            <strong class="text-dark">{{ student.course }} • {{ student.branch }}</strong>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Batch Year:</span>
+            <strong class="text-dark">{{ student.batch_year }}</strong>
+          </div>
+          <div class="col-6">
+            <span class="text-muted d-block">Session:</span>
+            <strong class="text-dark">{{ student.academic_session }}</strong>
+          </div>
+          <div class="col-12">
+            <span class="text-muted d-block">Accommodation:</span>
+            <strong class="text-dark">{{ student.hostel_details|default:"Day Scholar" }}</strong>
+          </div>
+          <div class="col-12">
+            <span class="text-muted d-block">Email & Phone:</span>
+            <span class="text-dark">{{ student.user.email }} • {{ student.contact_number|default:"N/A" }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Summary & Admin Override -->
+    <div class="col-lg-8">
+      <div class="card card-clean border-0 shadow-sm p-4 h-100">
+        <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-1">Clearance Overview & Financial Liabilities</h5>
+            <div class="text-muted small">Purpose: <strong>{{ application.get_purpose_display }}</strong></div>
+          </div>
+          <div class="text-end">
+            {% if application.overall_status == 'COMPLETED' %}
+              <span class="badge badge-status-approved px-3 py-2 fs-6">100% Fully Cleared</span>
+            {% elif application.overall_status == 'ACTION_REQUIRED' %}
+              <span class="badge badge-status-action px-3 py-2 fs-6">Action Required</span>
+            {% elif application.overall_status == 'ON_HOLD' %}
+              <span class="badge badge-status-hold px-3 py-2 fs-6">On Hold</span>
+            {% elif application.overall_status == 'REJECTED' %}
+              <span class="badge badge-status-rejected px-3 py-2 fs-6">Rejected</span>
+            {% else %}
+              <span class="badge badge-status-pending px-3 py-2 fs-6">In Pipeline</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <div class="p-2 border rounded bg-light">
+              <span class="text-muted small">Mandatory Departments Cleared</span>
+              <div class="fs-4 fw-bold text-primary">{{ application.approved_departments_count }} / {{ application.total_mandatory_count }} ({{ application.progress_percentage }}%)</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-2 border rounded bg-light">
+              <span class="text-muted small">Total Department Dues</span>
+              <div class="fs-4 fw-bold {% if application.total_dues_amount > 0 %}text-danger{% else %}text-success{% endif %}">₹ {{ application.total_dues_amount }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-2 border rounded bg-light">
+              <span class="text-muted small">Certificate Issued</span>
+              <div class="fs-6 fw-bold text-dark mt-1">
+                {% if application.is_completed %}
+                  <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Yes ({{ application.certificate.certificate_no }})</span>
+                {% else %}
+                  <span class="text-muted">Pending Verification</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Override Action Box -->
+        {% if not application.is_completed %}
+          <div class="card p-3 bg-light border border-warning rounded-3 mt-3">
+            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-shield-lock-fill text-warning me-1"></i>Administrative Override Authority</h6>
+            <p class="small text-muted mb-2">
+              As University Administrator (Registrar / Dean), you have the authority to grant expedited institutional approval across all departments and generate the certificate immediately.
+            </p>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="admin_action" value="FORCE_APPROVE_ALL">
+              <div class="row g-2 align-items-center">
+                <div class="col-md-8">
+                  <input type="text" name="admin_remarks" class="form-control form-control-sm" placeholder="Enter reason for administrative override / approval...">
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold" onclick="return confirm('Are you sure you want to approve all departments by administrative override?')">
+                    <i class="bi bi-check2-circle me-1"></i> Force-Approve All
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Department Clearances Table -->
+  <div class="card card-clean border-0 shadow-sm p-4 mb-4">
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-building-check text-primary me-2"></i>Department Clearance Audit Table</h5>
+    
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Department</th>
+            <th class="text-center">Status</th>
+            <th>Outstanding Due</th>
+            <th>Officer Remarks</th>
+            <th>Verified By</th>
+            <th>Review Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for clr in clearances %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi {{ clr.department.icon }} text-primary fs-5"></i>
+                  <div>
+                    <div class="fw-bold text-dark">{{ clr.department.name }}</div>
+                    <span class="text-muted small" style="font-size: 0.72rem;">{{ clr.department.code }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">
+                {% if clr.status == 'APPROVED' %}
+                  <span class="badge badge-status-approved px-2 py-1"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                {% elif clr.status == 'ACTION_REQUIRED' %}
+                  <span class="badge badge-status-action px-2 py-1"><i class="bi bi-exclamation-triangle me-1"></i>Dues Flagged</span>
+                {% elif clr.status == 'ON_HOLD' %}
+                  <span class="badge badge-status-hold px-2 py-1"><i class="bi bi-pause-circle me-1"></i>On Hold</span>
+                {% elif clr.status == 'REJECTED' %}
+                  <span class="badge badge-status-rejected px-2 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="badge badge-status-pending px-2 py-1"><i class="bi bi-clock me-1"></i>Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if clr.dues_amount > 0 %}
+                  <span class="badge bg-danger">₹ {{ clr.dues_amount }}</span>
+                  {% if clr.dues_breakdown %}
+                    <div class="small text-muted">{{ clr.dues_breakdown }}</div>
+                  {% endif %}
+                {% else %}
+                  <span class="text-success small fw-semibold">₹ 0.00</span>
+                {% endif %}
+              </td>
+              <td class="small">{{ clr.remarks|default:"Awaiting audit" }}</td>
+              <td class="small">{{ clr.reviewed_by.get_full_name|default:clr.reviewed_by.username|default:"-" }}</td>
+              <td class="small text-muted">{{ clr.reviewed_at|date:"d M Y, h:i A"|default:"-" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Audit Trail History -->
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history me-2"></i>Complete Audit Trail</h5>
+    <div class="list-group list-group-flush">
+      {% for log in logs %}
+        <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center small">
+          <div>
+            <span class="badge bg-light text-primary border font-monospace me-2">{{ log.action }}</span>
+            <strong>{% if log.department %}{{ log.department.name }}: {% endif %}</strong>
+            <span>{{ log.remarks }}</span>
+            {% if log.dues_amount > 0 %}
+              <span class="badge bg-danger ms-2">₹ {{ log.dues_amount }}</span>
+            {% endif %}
+          </div>
+          <div class="text-muted" style="font-size: 0.72rem;">
+            Actor: <b>{{ log.actor.get_full_name|default:log.actor.username|default:"System" }}</b> • {{ log.timestamp|date:"d M Y, h:i A" }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

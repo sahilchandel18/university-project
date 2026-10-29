@@ -1,0 +1,6 @@
+Django>=5.0,<6.0
+reportlab>=4.0.0
+pillow>=10.0.0
+qrcode[pil]>=7.4.2
+PyMySQL>=1.1.0
+python-dotenv>=1.0.0

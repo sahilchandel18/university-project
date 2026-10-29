@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Issued Certificates Registry - University Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-0">Issued No Dues Certificates Registry</h3>
+      <p class="text-muted small mb-0">Master repository of all digitally generated, tamper-evident No Dues Certificates with QR verification tokens.</p>
+    </div>
+  </div>
+
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Certificate No</th>
+            <th>Issue Date</th>
+            <th>Student Details</th>
+            <th>Application ID</th>
+            <th>QR Code Token (UUID)</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cert in certificates %}
+            <tr>
+              <td>
+                <span class="font-monospace fw-bold text-dark fs-6">{{ cert.certificate_no }}</span>
+              </td>
+              <td class="small">{{ cert.issue_date|date:"F d, Y" }}</td>
+              <td>
+                <div class="fw-bold text-dark">{{ cert.student.roll_number }}</div>
+                <div class="text-muted small">{{ cert.student.user.get_full_name|default:cert.student.user.username }}</div>
+              </td>
+              <td>
+                <a href="{% url 'admin_application_detail' cert.application.application_no %}" class="font-monospace small text-primary text-decoration-none">
+                  {{ cert.application.application_no }}
+                </a>
+              </td>
+              <td class="small">
+                <span class="font-monospace text-secondary" style="font-size: 0.75rem;">{{ cert.verification_uuid|truncatechars:18 }}</span>
+              </td>
+              <td>
+                {% if cert.is_valid %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Valid & Active</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-shield-x me-1"></i>Revoked</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'verify_certificate' cert.verification_uuid %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3" target="_blank" title="Public Verification View">
+                  <i class="bi bi-qr-code me-1"></i> Public Page
+                </a>
+                <a href="{% url 'download_certificate_pdf' cert.application.application_no %}" class="btn btn-primary btn-sm rounded-pill px-3 ms-1" target="_blank" title="Download Official PDF">
+                  <i class="bi bi-download me-1"></i> Download PDF
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No certificates have been issued yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

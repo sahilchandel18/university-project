@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Department Dashboard - {{ department.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Department Header Banner -->
+  <div class="card card-clean border-0 shadow-sm p-4 mb-4 bg-white">
+    <div class="row align-items-center g-3">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center gap-3">
+          <div class="p-3 bg-primary text-white rounded-3 fs-2">
+            <i class="bi {{ department.icon }}"></i>
+          </div>
+          <div>
+            <div class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1">{{ department.code }} SECTION</div>
+            <h4 class="fw-bold text-dark mb-0">{{ department.name }}</h4>
+            <div class="text-muted small">
+              Verification Officer: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> • 
+              Office: {{ staff_profile.cabin_office|default:department.location }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="{% url 'department_applications' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+          <i class="bi bi-ui-checks me-1"></i> Open Verification Queue
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-2 col-md-4 col-6">
+      <div class="card card-clean p-3 text-center border-0 h-100">
+        <div class="text-muted small fw-semibold">TOTAL ASSIGNED</div>
+        <div class="fs-3 fw-bold text-dark mt-1">{{ total_assigned }}</div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+      <div class="card card-clean p-3 text-center border-0 h-100 bg-warning-subtle">
+        <div class="text-dark small fw-semibold">PENDING REVIEW</div>
+        <div class="fs-3 fw-bold text-dark mt-1">{{ pending_count }}</div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+      <div class="card card-clean p-3 text-center border-0 h-100 bg-orange-subtle border-warning">
+        <div class="text-dark small fw-semibold">DUES FLAGGED</div>
+        <div class="fs-3 fw-bold text-danger mt-1">{{ action_req_count }}</div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+      <div class="card card-clean p-3 text-center border-0 h-100 bg-purple-subtle">
+        <div class="text-dark small fw-semibold">ON HOLD</div>
+        <div class="fs-3 fw-bold text-purple mt-1" style="color: #6b21a8;">{{ on_hold_count }}</div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+      <div class="card card-clean p-3 text-center border-0 h-100 bg-danger-subtle">
+        <div class="text-dark small fw-semibold">REJECTED</div>
+        <div class="fs-3 fw-bold text-danger mt-1">{{ rejected_count }}</div>
+      </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+      <div class="card card-clean p-3 text-center border-0 h-100 bg-success-subtle">
+        <div class="text-success small fw-semibold">APPROVED</div>
+        <div class="fs-3 fw-bold text-success mt-1">{{ approved_count }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Pending Clearances Queue -->
+  <div class="card card-clean border-0 shadow-sm p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Applications Waiting for Review</h5>
+      <a href="{% url 'department_applications' %}" class="small text-decoration-none fw-semibold">View All Applications &rarr;</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Application ID</th>
+            <th>Roll Number</th>
+            <th>Student Name</th>
+            <th>Course & Branch</th>
+            <th>Residency</th>
+            <th>Submitted</th>
+            <th class="text-end">Verification Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for clr in recent_pending %}
+            {% with app=clr.application student=clr.application.student %}
+              <tr>
+                <td><span class="font-monospace fw-semibold text-primary">{{ app.application_no }}</span></td>
+                <td><strong class="text-dark">{{ student.roll_number }}</strong></td>
+                <td>{{ student.user.get_full_name|default:student.user.username }}</td>
+                <td class="small">{{ student.course|truncatewords:4 }}</td>
+                <td>
+                  {% if student.is_hostel_resident %}
+                    <span class="badge bg-secondary-subtle text-secondary">Hosteller</span>
+                  {% else %}
+                    <span class="badge bg-light text-muted border">Day Scholar</span>
+                  {% endif %}
+                </td>
+                <td class="small text-muted">{{ app.submitted_at|date:"d M, h:i A" }}</td>
+                <td class="text-end">
+                  <a href="{% url 'department_review_clearance' clr.id %}" class="btn btn-primary btn-sm rounded-pill px-3">
+                    <i class="bi bi-pencil-square me-1"></i> Review Dues
+                  </a>
+                </td>
+              </tr>
+            {% endwith %}
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <i class="bi bi-check2-all fs-2 text-success d-block mb-2"></i>
+                Queue is clear! No applications are currently pending verification for {{ department.name }}.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
